@@ -9,8 +9,8 @@ public class CameraControl2 : MonoBehaviour
     private float _zoomSpeed;
     private float _rotationSpeed;
 
-    private float _maxHeight = 300f;
-    private float _minHeight = 3f;
+    private float _maxHeight = 10f;
+    private float _minHeight = 0f;
 
     private  Vector2 startPosition;
     private  Vector2 EndPosition;
@@ -33,6 +33,7 @@ public class CameraControl2 : MonoBehaviour
         //========================\\
         //        ZOOM PART       \\
         //========================\\
+        /*
         if ( (transform.position.y >= _maxHeight) && (ScrollSpeed > 0) )
         {
             ScrollSpeed = 0;
@@ -41,6 +42,7 @@ public class CameraControl2 : MonoBehaviour
         {
             ScrollSpeed = 0;
         }
+        */
         if((transform.position.y + ScrollSpeed) > _maxHeight)
         {
             ScrollSpeed = _maxHeight - transform.position.y;

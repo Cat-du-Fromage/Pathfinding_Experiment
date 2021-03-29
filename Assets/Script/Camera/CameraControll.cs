@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
 
-public class CameraControl : MonoBehaviour
+public class CameraControll : MonoBehaviour
 {
     private float _speed;
     private float _zoomSpeed;
@@ -34,6 +34,7 @@ public class CameraControl : MonoBehaviour
         //========================\\
         //        ZOOM PART       \\
         //========================\\
+        
         if ( (transform.position.y >= _maxHeight) && (ScrollSpeed > 0) )
         {
             ScrollSpeed = 0;
@@ -42,6 +43,7 @@ public class CameraControl : MonoBehaviour
         {
             ScrollSpeed = 0;
         }
+        
         if((transform.position.y + ScrollSpeed) > _maxHeight)
         {
             ScrollSpeed = _maxHeight - transform.position.y;
