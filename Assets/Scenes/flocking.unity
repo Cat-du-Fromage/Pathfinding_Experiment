@@ -1271,14 +1271,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1559571843}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79d8fccb894d7c4a97d6c282f95dd36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   agentPrefab: {fileID: 7598357294165894323, guid: 245f3949cd14bf54a916313ac5f11d55, type: 3}
   behavior: {fileID: 11400000, guid: fd9cae052443c764f8a154470e777e46, type: 2}
-  startingCount: 10
+  startingCount: 73
   driveFactor: 10
   maxSpeed: 5
   neighborRadius: 1.5
@@ -1428,7 +1428,7 @@ MonoBehaviour:
   driveFactor: 10
   maxSpeed: 7
   neighborRadius: 1.5
-  avoidanceRadiusMultiplier: 0.5
+  avoidanceRadiusMultiplier: 1
 --- !u!4 &2114926951
 Transform:
   m_ObjectHideFlags: 0

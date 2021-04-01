@@ -69,7 +69,7 @@ public class Flock : MonoBehaviour
             {
                 move = move.normalized * maxSpeed;
             }
-            //move.y = Mathf.Clamp(move.y, 0, 10);
+            move.y = Mathf.Clamp(move.y, 0, 10);
             //Debug.Log($"move = {move}");
             agent.Move(move);
             
