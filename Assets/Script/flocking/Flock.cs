@@ -47,7 +47,7 @@ public class Flock : MonoBehaviour
                 transform
                 );
             newAgent.name = "Agent " + i;
-            //newAgent.Initialize(this);
+            newAgent.Initialize(this); //programm knows which agent belongs to THIS specific flock
             agents.Add(newAgent);
         }
     }
@@ -63,11 +63,14 @@ public class Flock : MonoBehaviour
             //agent.GetComponentInChildren<Renderer>().material.color = Color.Lerp(Color.white, Color.red, context.Count / 6f);
             
             Vector3 move = behavior.CalculateMove(agent, context, this);
+            //Debug.Log($"Init move = {move}");
             move *= driveFactor;
             if (move.sqrMagnitude > squareMaxSpeed)
             {
                 move = move.normalized * maxSpeed;
             }
+            move.y = Mathf.Clamp(move.y, 0, 10);
+            //Debug.Log($"move = {move}");
             agent.Move(move);
             
         }

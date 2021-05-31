@@ -10,7 +10,7 @@ public class CameraControll : MonoBehaviour
     private float _rotationSpeed;
 
     private float _maxHeight = 300f;
-    private float _minHeight = 3f;
+    private float _minHeight = 1f;
 
     private  Vector2 startPosition;
     private  Vector2 EndPosition;
@@ -18,13 +18,13 @@ public class CameraControll : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _rotationSpeed = 20f;
+        _rotationSpeed = 100f;
     }
 
     // Update is called once per frame
     void Update()
     {
-        _speed = Input.GetKey(KeyCode.LeftShift) ? 3.6f : 1.8f;
+        _speed = Input.GetKey(KeyCode.LeftShift) ? 10f : 5f;
         _zoomSpeed = Input.GetKey(KeyCode.LeftShift) ? 1080.0f : 540.0f;
 
         // "Mathf.Log(transform.position.y)" Adjust the speed the higher the camera is
