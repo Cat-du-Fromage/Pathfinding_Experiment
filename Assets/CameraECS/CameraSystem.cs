@@ -21,27 +21,53 @@ namespace CameraECS.InputSystem
         }
         protected override void OnUpdate()
         {
-            EntityQuery test = GetEntityQuery(typeof(CamMove.MouseStartPosition));
+            /*
+            if (Input.GetMouseButtonDown(2))
+            {
+                SetComponent(GetSingletonEntity<Data.Tag.CameraTag>(), new CamMove.MouseDragPosition {DragLength = Input.mousePosition });
+                //mouseDragPos.End = Input.mousePosition;
+                UnityEngine.Debug.Log($"Input.mousePosition");
+            }
+            */
+
             Entities
                 //.WithBurst()
                 .WithoutBurst()
                 .WithAll<Data.Tag.CameraTag>()
-                .ForEach((Entity camera, ref CamMove.Direction direction, in CamInput.LeftShift leftShift, in CamInput.Up up, in CamInput.Down down, in CamInput.Right right, in CamInput.Left left, in CamInput.MouseMiddle midMouse) =>
-                {
-                    float3 x = (Input.GetKey(right.RightKey) ? math.right() : float3.zero) + (Input.GetKey(left.LeftKey) ? math.left() : float3.zero);
-                    float3 z = (Input.GetKey(up.UpKey) ? math.forward() : float3.zero) + (Input.GetKey(down.DownKey) ? math.back() : float3.zero);
+                .ForEach((ref CamMove.MouseDragPosition mouseDragPos,
+                          ref CamMove.Direction direction,
+                          in CamInput.LeftShift leftShift,
+                          in CamInput.Up up,
+                          in CamInput.Down down,
+                          in CamInput.Right right,
+                          in CamInput.Left left,
+                          //in CamInput.MouseMiddle midMouse,
+                          in LocalToWorld ltw) =>
+                        {
+                            float3 moveZPositiv = new float3(ltw.Forward.x, 0, ltw.Forward.z);
+                            //float3 x = (Input.GetKey(right.RightKey) ? math.right() : float3.zero) + (Input.GetKey(left.LeftKey) ? math.left() : float3.zero);
+                            //float3 z = (Input.GetKey(up.UpKey) ? math.forward() : float3.zero) + (Input.GetKey(down.DownKey) ? math.back() : float3.zero);
+                            float3 x = (Input.GetKey(right.RightKey) ? ltw.Right : float3.zero) + (Input.GetKey(left.LeftKey) ? -ltw.Right : float3.zero);
+                            float3 z = (Input.GetKey(up.UpKey) ? moveZPositiv : float3.zero) + (Input.GetKey(down.DownKey) ? -moveZPositiv : float3.zero);
+                            // Y axe is a bit special
+                            float3 y = float3.zero;
+                            if (!Input.mouseScrollDelta.Equals(float2.zero)) { y = Input.mouseScrollDelta.y > 0 ? math.up() : math.down(); }
 
-                    // Y axe is a bit special
-                    float3 y = float3.zero;
-                    if (!Input.mouseScrollDelta.Equals(float2.zero)) { y = Input.mouseScrollDelta.y > 0 ? math.up() : math.down(); }
+                            direction.Value = x + y + z;
 
-                    direction.Value = x + y + z;
-
-                    //Rotation
-                    if (Input.GetKeyDown(midMouse.MiddleMouseKey)) SetComponent(camera, new CamMove.MouseStartPosition { Value = Input.mousePosition });
-                    if(Input.GetKey(midMouse.MiddleMouseKey)) test.SetChangedVersionFilter(typeof(CamMove.MouseStartPosition));
-                    //if (Input.GetKey(midMouse.MiddleMouseKey)) Change
-                }).Run();
+                            //Rotation
+                            
+                            if (Input.GetMouseButtonDown(2)) 
+                            {
+                                mouseDragPos.Start = Input.mousePosition;
+                                //mouseDragPos.End = Input.mousePosition;
+                                UnityEngine.Debug.Log($"Input.mousePosition"); 
+                            }
+                            
+                            mouseDragPos.End = Input.GetMouseButton(2) ? (float3)Input.mousePosition : mouseDragPos.Start;
+                            mouseDragPos.DragLength = mouseDragPos.End - mouseDragPos.Start;
+                            //UnityEngine.Debug.Log($"Input.mousePosition : {mousePosition.End}");
+                        }).Run();
         }
     }
 
@@ -55,45 +81,84 @@ namespace CameraECS.InputSystem
         protected override void OnUpdate()
         {
             bool didMove = !GetComponent<CamMove.Direction>(GetSingletonEntity<Data.Tag.CameraTag>()).Value.Equals(float3.zero);
+            bool isRotating = Input.GetMouseButton(2);
             float deltaTime = Time.DeltaTime;
 
-            if (didMove)
+            if (didMove || isRotating) //CARFUL WITH THIS THING
             {
                 Entities
                     .WithBurst()
-                    .ForEach((ref Translation position, ref Rotation rotation, ref CamMove.Speed speed, ref CamMove.SpeedZoom speedZoom, in CamMove.Direction direction, in CamInput.LeftShift leftShift, in CamMove.ShiftMultiplicator shiftMul) =>
-                    {
-                        #region X/Z translation
-                        //Shift Key multiplicator
-                        float speedXZ = Input.GetKey(leftShift.LeftShiftKey) ? math.mul(speed.Value, shiftMul.Value) : speed.Value; //speed
-                        float speedY = Input.GetKey(leftShift.LeftShiftKey) ? math.mul(speedZoom.Value, shiftMul.Value) : speedZoom.Value; //speedZoom
+                    .WithAll<Data.Tag.CameraTag>()
+                    .ForEach((ref Translation position,
+                              ref Rotation rotation,
+                              ref CamMove.Speed speed,
+                              ref CamMove.SpeedZoom speedZoom,
+                              ref CamMove.MouseDragPosition mouseDragPos,
+                              in CamMove.Direction direction,
+                              in CamInput.LeftShift leftShift,
+                              //in CamInput.MouseMiddle midMouse
+                              in LocalToWorld ltw
+                              //in CamMove.ShiftMultiplicator shiftMul,
+                              ) =>
+                                {
+                                    UnityEngine.Debug.Log($"Enter2");
+                                    #region X/Z translation
+                                    //Shift Key multiplicator
+                                    float speedXZ = Input.GetKey(leftShift.LeftShiftKey) ? math.mul(speed.Value, 2/*shiftMul.Value*/) : speed.Value; //speed
+                                    float speedY = Input.GetKey(leftShift.LeftShiftKey) ? math.mul(speedZoom.Value, 2/*shiftMul.Value*/) : speedZoom.Value; //speedZoom
 
-                        //Speed depending on Y Position (min : default speed Value)
-                        speedXZ = math.max(speedXZ, math.mul(position.Value.y, speedXZ));
-                        speedY = math.max(speedY, math.mul( math.log(position.Value.y), speedY ) );
+                                    //Speed depending on Y Position (min : default speed Value)
+                                    speedXZ = math.max(speedXZ, math.mul(position.Value.y, speedXZ));
+                                    speedY = math.max(speedY, math.mul(math.log(position.Value.y), speedY));
 
-                        //Dependency with delta time
-                        float SpeedDeltaTimeXZ = math.mul(speedXZ, deltaTime);
-                        float SpeedDeltaTimeY = math.mul(speedY, deltaTime);
+                                    //Dependency with delta time
+                                    float SpeedDeltaTimeXZ = math.mul(speedXZ, deltaTime);
+                                    float SpeedDeltaTimeY = math.mul(speedY, deltaTime);
 
-                        //calculate new position (both XZ and Y)
-                        float3 HorizontalMove = new float3(math.mad(direction.Value.x, SpeedDeltaTimeXZ, position.Value.x), 0, math.mad(direction.Value.z, SpeedDeltaTimeXZ, position.Value.z));
-                        float3 VerticalMove = new float3(0, math.mad(direction.Value.y, SpeedDeltaTimeY, position.Value.y), 0);
+                                    //calculate new position (both XZ and Y)
+                                    float3 HorizontalMove = new float3(math.mad(direction.Value.x, SpeedDeltaTimeXZ, position.Value.x), 0, math.mad(direction.Value.z, SpeedDeltaTimeXZ, position.Value.z));
+                                    float3 VerticalMove = new float3(0, math.mad(direction.Value.y, SpeedDeltaTimeY, position.Value.y), 0);
 
-                        position.Value = HorizontalMove + VerticalMove;
-                        #endregion X/Z translation
+                                    position.Value = HorizontalMove + VerticalMove;
+                                    #endregion X/Z translation
 
-                        #region Rotation
+                                    #region Rotation
+                                    float rotationSpeed = math.mul(speed.Value, deltaTime);
+                                    UnityEngine.Debug.Log($"Enter3 {rotationSpeed} ");
+                                    float3 distanceRadian = new float3(math.radians(mouseDragPos.DragLength.x), math.radians(mouseDragPos.DragLength.y), math.radians(mouseDragPos.DragLength.z));
 
-                        //rotation.Value = quaternion.EulerZXY(new float3(1,1,1));
-                        #endregion Rotation
+                                    float distanceX = math.mul(rotationSpeed, distanceRadian.x);
+                                    float distanceY = math.mul(rotationSpeed, distanceRadian.y);
 
-                    }).Run();
+                                    UnityEngine.Debug.Log($"distanceX : {distanceX}");
+                                    UnityEngine.Debug.Log($"Direction : {math.normalize(mouseDragPos.DragLength)}");
+                                    UnityEngine.Debug.Log($"Direction max value : {math.cmax(math.normalize(math.abs(mouseDragPos.DragLength)))}");
+                                    //when dragging top Y Higher => math.cmax(math.normalize(mouseDragPos.DragLength))
+                                    float3 dragVectorAbs = math.abs(mouseDragPos.DragLength);
+                                    if(!mouseDragPos.DragLength.Equals(float3.zero))
+                                    {
+                                        if (math.cmax(math.normalize(math.abs(mouseDragPos.DragLength))) == math.normalize(dragVectorAbs).x)
+                                        {
+                                            rotation.Value = math.mul(rotation.Value, quaternion.RotateY(distanceX).value);
+                                        }
+                                        else // ISSUE : rotation Y and X cross badly
+                                        {
+                                            rotation.Value = math.mul(rotation.Value, quaternion.RotateX(-distanceY).value);
+                                        }
+                                    }
+
+                                    //rotation.Value = math.mul(rotation.Value, quaternion.RotateY(distanceX).value);
+
+                                    #endregion Rotation
+                                    //math.transform(math.inverse(ltw.Value), position.Value);
+                                    //rotation.Value = math.mul(rotation.Value, quaternion.AxisAngle(math.left(), -distanceX));
+                                    //rotation.Value = math.mul(rotation.Value, quaternion.AxisAngle(math.up(), -distanceY));
+                                }).Run();
             }
         }
     }
 
-    
+    /*
     [BurstCompile]
     public class CameraRotationSystem : SystemBase
     {
@@ -122,5 +187,5 @@ namespace CameraECS.InputSystem
             }
         }
     }
-    
+    */
 }

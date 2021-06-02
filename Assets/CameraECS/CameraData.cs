@@ -33,7 +33,7 @@ namespace CameraECS.Data.Inputs
     }
     public struct MouseMiddle : IComponentData
     {
-        public KeyCode MiddleMouseKey;
+        public int MiddleMouseKey;
     }
     /*
     public struct MouseScrollUp : IComponentData
@@ -65,8 +65,10 @@ namespace CameraECS.Data.Move
     {
         public int Value;
     }
-    public struct MouseStartPosition : IComponentData
+    public struct MouseDragPosition : IComponentData
     {
-        public float3 Value;
+        public float3 Start;
+        public float3 End;
+        public float3 DragLength;
     }
 }
